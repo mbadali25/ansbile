@@ -1,0 +1,19 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: "Checks the print Queue to see if its used"
+  hosts: "{{ hosts | default('development') }}"
+  gather_facts: true
+  tasks:
+    - name: Create directory structure
+      win_file:
+        path: C:\scripts
+        state: directory
+      when: ansible_os_family == "Windows"
+    - name: "Deploy Powershell script to log print queue"
+      win_copy:
+        src: "/etc/ansible/files/scripts/Get-PrintQueueHistory.ps1"
+        dest: 'C:\scripts\Get-PrintQueueHistory.ps1'
+      when: ansible_os_family == "Windows"
+    - name: Run Get Print Queue History Script
+      win_shell: C:\scripts\Get-PrintQueueHistory.ps1

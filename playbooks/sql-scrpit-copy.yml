@@ -1,0 +1,12 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: Copies move_sql_backups.ps1 powershell to all sql servers
+  hosts: "{{ hosts | default('development') }}"
+  gather_facts: true
+  tasks:
+    - name: script to server move_sql_backups.ps1
+      win_copy:
+        src: "/etc/ansible/files/scripts/move_sql_backups.ps1"
+        dest: C:\scripts\move_sql_backups.ps1
+      when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"

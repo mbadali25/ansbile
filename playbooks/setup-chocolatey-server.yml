@@ -1,0 +1,6 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: PAWSE01BCHT01
+  roles:
+    - win_chocolatey_server

@@ -1,0 +1,7 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: "{{ hosts | default('PAWSITUTIL05') }}"
+  tasks:
+   - ansible.builtin.setup: 
+   - debug: var=ansible_facts.system_info.local_facts.datadog_exclusion

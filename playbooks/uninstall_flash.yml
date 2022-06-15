@@ -1,0 +1,15 @@
+---
+- name: "Check if Flash Directory Exists"
+  win_stat:
+    path: C:\Windows\SysWOW64\Macromed\
+  register: flash_folder
+
+- name: "Uninstall Flash"
+  win_shell: cmd /c "C:\Windows\SysWOW64\Macromed\Flash\FlashUtil_ActiveX.exe -uninstall"
+  when: flash_folder.stat.exists
+
+- name: "Remove Flash Directory"
+  win_file:
+    path: C:\Windows\SysWOW64\Macromed\
+    state: absent
+  when: flash_folder.stat.exists

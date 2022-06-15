@@ -1,0 +1,18 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: Restart Windows Servers
+  hosts: "{{ hosts | default('development') }}"
+  tasks:
+    - name: "Rebooting Windows Servers"
+      win_reboot:
+      when: ansible_os_family == "Windows"
+
+- name: Restart Linux Servers
+  hosts: "{{ hosts | default('development') }}"
+  become: true
+  become_user: root
+  tasks:
+    - name: Rebooting Linux Servers
+      reboot:
+        when: ansible_os_family == "Linux"

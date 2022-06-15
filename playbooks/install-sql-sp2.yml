@@ -1,0 +1,40 @@
+---
+- name: "Installing Windows Updates"
+  hosts: new_development_edw_servers
+  tasks:
+   - name: Install SQL Server 2016 SP2
+     win_shell:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        reboot: yes
+
+
+
+
+#Update RDP SSL Certs Windows
+- name: Create directory structure
+  win_file:
+    path: C:\scripts
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: "Copy RDP SSL Cert Update Script"
+  win_copy:
+    src: "/etc/ansible/files/scripts/updaterdpssl.ps1"
+    dest: C:\scripts\updaterdpssl.ps1
+  when: ansible_os_family == "Windows"
+
+- name: Run RDP SSL Update Script
+  win_shell: C:\scripts\updaterdpssl.ps1
+  when: ansible_os_family == "Windows"
+
+- name: "Copy RDP delete Self Signed SSL Cert Update Script"
+  win_copy:
+    src: "/etc/ansible/files/scripts/remove-rdp-sscert.ps1"
+    dest: C:\scripts\remove-rdp-sscert.ps1
+  when: ansible_os_family == "Windows"
+
+- name: Run to delete RDP SSL Update Script
+  win_shell: C:\scripts\remove-rdp-sscert.ps1
+  when: ansible_os_family == "Windows"

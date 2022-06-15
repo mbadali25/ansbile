@@ -1,0 +1,7 @@
+---
+- hosts: redgate
+  gather_facts: true
+  roles:
+        - windows-server
+        - sql-server
+

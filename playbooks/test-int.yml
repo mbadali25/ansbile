@@ -1,0 +1,10 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: "{{ hosts | default('windows') }}"
+  tasks:
+    - name: Gather Facts
+      setup:
+    
+    - name: Debug Facts
+      debug: var=ansible_facts.system_info.sql_facts.sql_server_role

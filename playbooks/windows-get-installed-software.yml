@@ -1,0 +1,19 @@
+- name: Capture installed package information for Windows hosts
+  hosts: windows
+  tasks:
+    - name: Run the powershell command to get installed applications
+      win_shell: Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object PSPath, DisplayName, DisplayVersion | ConvertTo-Json
+      register: Wow6432Node_packages
+
+    - name: Display output
+      debug:
+        var: Wow6432Node_packages
+
+    - name: Run the powershell command to get more installed applications
+      win_shell: Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object PSPath, DisplayName, DisplayVersion | ConvertTo-Json
+      register: Microsoft_packages
+
+    - name: Display output
+      debug:
+        var: Microsoft_packages`
+

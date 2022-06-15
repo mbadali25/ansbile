@@ -1,0 +1,12 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: Playbook template calling another playbook by setting a variable
+  hosts: "{{ hosts | default('development') }}"
+  gather_facts: true
+  tasks:
+    - name: "Display all facts on Windows Hosts"
+      debug:
+        msg: "{{ ansible_facts }}"
+      when: ansible_os_family == "Windows"
+    - include: ping-host.yml

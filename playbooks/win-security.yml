@@ -1,0 +1,7 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: aws
+  roles:
+    - { role: windows-security }
+  gather_facts: yes

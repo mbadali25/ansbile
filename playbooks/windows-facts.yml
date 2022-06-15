@@ -1,0 +1,24 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: "{{ hosts | default('PAWSITUTIL05') }}"
+  tasks:
+   - name: Test Windows Facts
+     win_shell: (Get-ADComputer $env:COMPUTERNAME -Properties environment).environment
+     when: ansible_os_family == "Windows"
+     register: win_environment
+
+   - name: Setting environment fact
+     set_fact:
+       environment: 'test'
+       cacheable: yes
+
+   - name: Re-read facts after adding custom fact
+     ansible.builtin.setup:
+       filter: ansible_local
+#win_environment.stdout
+     
+#   - name: Create Fact List
+#     set_fact: environment="{{ win_environment.results | map(attributes='ansible_facts.environment') | list }}"
+
+   - debug: var=ansible_facts

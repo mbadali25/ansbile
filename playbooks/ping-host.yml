@@ -1,0 +1,5 @@
+----
+tasks:
+  - name: 'Pinging Windows hosts'
+    debug:
+      msg: {{vars}}

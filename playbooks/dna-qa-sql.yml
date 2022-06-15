@@ -1,0 +1,7 @@
+---
+- hosts: qa_dna_sql
+  gather_facts: true
+  roles:
+#        - windows-server
+        - sql-server
+

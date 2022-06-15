@@ -1,0 +1,10 @@
+---
+- name: "Restart RDP"
+  hosts: domaincontroller
+  gather_facts: false
+  tasks:
+   - name: Restart RDP Service
+     win_service:
+       name: TermService
+       state: restarted
+       force_dependent_services: yes

@@ -1,0 +1,7 @@
+---
+- hosts: production_dna_sharepointgw
+  gather_facts: true
+  roles:
+        - windows-server
+#        - sql-server
+

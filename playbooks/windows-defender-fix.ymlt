@@ -1,0 +1,14 @@
+---
+- name: "Installing Windows Updates"
+  hosts: temp_now
+  tasks:
+#   - name: Installing Telnet Client
+#     win_feature:
+#       name: Windows-Defender
+#       state: absent
+
+   - name: Set Winodws Defender Service to Automatic
+     win_service:
+       name: windefend
+       state: started
+
