@@ -1,0 +1,5 @@
+---
+# vars file for windows-server
+#Specifies what user(s) and group(S) will be added to the local admin group
+admingroups:
+  - CORP\PrinterAdmins

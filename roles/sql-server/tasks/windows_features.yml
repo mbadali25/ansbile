@@ -1,0 +1,61 @@
+---
+# tasks file for sql-server
+# This installs all the necessary Windows Server Features
+# Running Power Shell Scripts
+#############################
+
+
+
+##############################################################
+# This is used to make the code cleaner and easier to ready
+#############################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+- name: Set the path to extract SQL Installation Media
+  set_fact:
+    sql_extract_file_path: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQL{{ sql_version }}"
+
+
+#############################################################
+# Installing Windows Features
+#############################################################
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- name: Flush Handlers after Reboot
+  meta: flush_handlers
+
+- name: windows | Install .NET Framework 4.5 Features
+  win_feature:
+    name: NET-Framework-45-Features
+    state: present
+    include_sub_features: True
+  when: server_role == "databaseserver" or server_role == "integrationsserver" or server_role == "analysisserver" or server_role == "reportingserver"
+
+- name: windows | install windows feature rsat-dns-server
+  win_feature:
+    name: RSAT-DNS-Server
+    state: present
+    include_management_tools: yes
+  when: server_role == "databaseserver" or server_role == "integrationsserver" or server_role == "analysisserver" or server_role == "reportingserver"
+
+- name: windows | install windows fail over clustering
+  win_feature:
+    name: Failover-Clustering
+    state: present
+    include_sub_features: True
+    include_management_tools: yes
+  when: server_role == "databaseserver"
+

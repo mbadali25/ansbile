@@ -1,0 +1,67 @@
+---
+# tasks file for web-server
+# This installs all the necessary Windows Server Features
+# Running Power Shell Scripts
+#############################
+
+- name: Windows | Install .NET Framework 3.5
+  win_feature:
+    name: NET-Framework-Features
+    state: present
+    include_sub_features: yes
+
+- name: windows | Install .NET Framework 4.5 Features
+  win_feature:
+    name: NET-Framework-45-Features
+    state: present
+    include_sub_features: yes
+
+- name: windows | install windows process activation service
+  win_feature:
+    name: WAS
+    state: present
+    include_sub_features: yes
+
+# IIS Components
+
+- name: windows | IIS Web Server Common Components
+  win_feature:
+    name: Web-Common-Http
+    state: present
+    include_sub_features: yes
+
+- name: windows | IIS Web Server Health and Diagnostics
+  win_feature:
+    name: Web-Health
+    state: present
+    include_sub_features: yes
+
+- name: windows | IIS Web Server Perforamnce
+  win_feature:
+    name: Web-Performance
+    state: present
+    include_sub_features: yes
+
+- name: windows | IIS Web Server Application Development
+  win_feature:
+    name: Web-App-Dev
+    state: present
+    include_sub_features: yes
+
+- name: windows | IIS Web Server Management Tools
+  win_feature:
+    name: Web-Mgmt-Tools
+    state: present
+    include_management_tools: yes
+    include_sub_features: yes
+
+- name: windows | IIS Web Server Remove WebDav
+  win_feature:
+    name: Web-DAV-Publishing
+    state: absent
+
+- name: windows | IIS Web Server Security
+  win_feature:
+    name: Web-Security
+    include_sub_features: yes
+    state: present

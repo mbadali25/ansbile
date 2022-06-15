@@ -1,0 +1,11 @@
+---
+# vars file for web-server role
+# environment: dev
+# team: data-and-analytics
+# standard gmsa users
+#Specifies what user(s) and group(S) will be added to the local admin group
+
+gmsa_users:
+  - cmpturntableprd
+  - apitrntbleprod
+  - cmptaskprod

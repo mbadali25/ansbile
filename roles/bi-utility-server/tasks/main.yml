@@ -1,0 +1,17 @@
+---
+# tasks file for windows-server
+#Standard Configurations for Windowss Server Setup
+- name: Include Windows Server User Groups Variables
+  include_vars: serversetup.yml
+
+- name: Standard items via chocolately
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ chocolateysoftware }}"
+
+- include: /etc/ansible/playbooks/add-local-admin.yml
+  vars:
+    localusergroup: Administrators
+    usergroups: "{{admingroups}}"

@@ -1,0 +1,147 @@
+---
+# tasks file for sql-server role
+# this will complete configure and install all software required for the sql server role
+
+##################################################################
+
+##################################################################
+# This is used to make the code cleaner and easier to ready
+##################################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+#################################################################
+# Task
+#################################################################
+
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: credssp"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+- name: copies scripts
+  include_tasks: copy_scripts.yml 
+
+- name: run powershell task for sql server setup
+  include_tasks: powershell_task.yml
+
+#- name: provisions disk
+#  include_tasks: provision_disk.yml
+
+# Installs Required Software
+#- name: installs software via package manager
+#  include_tasks: software_setup.yml
+
+# Installs Python Modules
+#- name: installs required python modules
+#  include_tasks: python_modules.yml
+
+#- name: installs required powershell modules
+#  include_tasks: powershell_modules.yml
+
+- name: installs required windows features
+  include_tasks: windows_features.yml
+
+- name: setup local admins
+  include_tasks: setup_local_admins.yml
+
+- name: configure sql server directories
+  include_tasks: create_directories.yml
+
+#################################################################
+- name: Update group_vars for ansible winrm connection credssp
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: credssp"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+- name: install sql server
+  include_tasks: sql_setup.yml
+  when: server_role == "databaseserver" or server_role == "integrationsserver" or server_role == "analysisserver" or server_role == "reportingserver"
+
+##################################################################
+
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: kerberos"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+#- name: patch sql server
+#  include_tasks: patch_sql.yml
+#  when: server_role == "databaseserver" or server_role == "integrationsserver" or server_role == "analysisserver" or server_role == "reportingserver"
+
+- name: configure SQL Services
+  include_tasks: sql_service_setup.yml
+  when: server_role == "databaseserver" or server_role == "integrationsserver" or server_role == "analysisserver" or server_role == "reportingserver"
+
+##################################################################
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: kerberos"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+- name: configure sql server settings
+  include_tasks: configure_sql.yml
+  when: server_role == "databaseserver" or server_role == "integrationsserver"
+
+# HA Setup for SQL Server
+##################################################################
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: kerberos"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+- name: configure windows failover cluster
+  include_tasks: wsfc_configure.yml
+  when: server_role == "databaseserver"
+
+##################################################################
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: kerberos"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+- name: configure sql server availability groups
+  include_tasks:  sql_ag_configure.yml
+  when: server_role == "databaseserver"

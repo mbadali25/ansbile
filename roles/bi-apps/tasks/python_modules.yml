@@ -1,0 +1,12 @@
+---
+# tasks file for sql-serer
+# This installs all the necessary python modules
+# Running Install Python Modules
+#############################
+
+# Load required pyhton modules
+- name: python | Install required pyhton modules
+  win_shell:
+    name: boto3,pandas
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" and ansible_facts.system_info.local_facts.server_owner == "data-and-analytics"

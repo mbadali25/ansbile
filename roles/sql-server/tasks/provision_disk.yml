@@ -1,0 +1,209 @@
+---
+# tasks file for sql-server
+# This creates provisions disk
+
+##################################################################
+# This is used to make the code cleaner and easier to ready
+##################################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+- name: Set the name of the userdb volume serial to userdb_volume_serial [Shortens Statements]
+  set_fact:
+    userdb_volume_serial: "{{ ansible_facts.system_info.sql_facts.sql_userdb_volume_serial }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    userdb_volume_serial: "{{ ansible_facts.system_info.sql_facts.sql_userdb_volume_serial }}"
+
+
+##################################################################
+# Tasks
+##################################################################
+
+- name: Get Disk Info
+  win_disk_facts:
+
+##################################################################
+# Initalize Disk
+##################################################################
+
+- name: Initialize SQL USER DB Disk
+  win_initialize_disk:
+   disk_number: "{{ item.number | int }}"
+   style: GPT
+   force: yes
+  with_items: "{{ansible_facts.disks}}"
+  when: item.serial_number.find(ansible_facts.system_info.sql_facts.sql_userdb_volume_serial) != -1 and item.partition_style != "GPT" and ansible_facts.system_info.sql_facts.sql_userdb_volume_serial.find("Not Installed") == -1 
+
+- name: Initialize SQL Backup Disk
+  win_initialize_disk:
+   disk_number: "{{item.number | int}}"
+   style: GPT
+   force: yes
+  with_items: "{{ansible_facts.disks}}"
+  when: item.serial_number.split('_')[0] == ansible_facts.system_info.sql_facts.sql_sqlbackup_volume_serial and item.partition_style != "GPT" and ansible_facts.system_info.sql_facts.sql_sqlbackup_volume_serial.find("Not Installed") == -1 
+
+- name: Initialize SQL TLOG Disk
+  win_initialize_disk:
+   disk_number: "{{item.number | int }}"
+   style: GPT
+   force: yes
+  with_items: "{{ ansible_facts.disks}}"
+  when: item.serial_number.split('_')[0] == ansible_facts.system_info.sql_facts.sql_sqltlog_volume_serial and item.partition_style != "GPT" and ansible_facts.system_info.sql_facts.sql_sqltlog_volume_serial.find("Not Installed") == -1 
+
+- name: Initialize SQL SYSTEM DB Disk
+  win_initialize_disk:
+   disk_number: "{{item.number | int}}"
+   style: GPT
+   force: yes
+  with_items: "{{ansible_facts.disks}}"
+  when: item.serial_number.split('_')[0] == ansible_facts.system_info.sql_facts.sql_systemdb_volume_serial and item.partition_style != "GPT" and ansible_facts.system_info.sql_facts.sql_systemdb_volume_serial.find("Not Installed") == -1 
+
+- name: Initialize SQL TEMP DB Disk
+  win_initialize_disk:
+   disk_number: "{{item.number | int }}"
+   style: GPT
+   force: yes
+  with_items: "{{ansible_facts.disks}}"
+  when: item.serial_number.split('_')[0] == ansible_facts.system_info.sql_facts.sql_tempdb_volume_serial and item.partition_style != "GPT" and ansible_facts.system_info.sql_facts.sql_tempdb_volume_serial.find("Not Installed") == -1 
+
+- name: Initialize SQL Instance Storage 0 Disk
+  win_initialize_disk:
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_0_disk_number}}"
+   style: GPT
+   force: yes
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_0_disk_number != "Not Installed"
+
+- name: Initialize SQL Instance Storage 1 Disk
+  win_initialize_disk:
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_1_disk_number }}"
+   style: GPT
+   force: yes
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_1_disk_number != "Not Installed"
+
+#################################################
+## Create Paritions
+#################################################
+
+- name: Create Partiion for USERDB Disk
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_userdb_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_userdb_disk_number | int}}"
+  when:  ansible_facts.system_info.sql_facts.sql_userdb_volume_serial.find("Not Installed") == -1
+
+- name: Format USERDB Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_userdb_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_userdb_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_userdb_volume_serial.find("Not Installed") == -1
+
+- name: Create Partiion for SQLTLOG Disk
+  win_partition:
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_sqltlog_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_sqltlog_disk_number | int}}"
+  when: ansible_facts.system_info.sql_facts.sql_sqltlog_volume_serial.find("Not Installed") == -1
+
+- name: Format SQLTLOG Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_sqltlog_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_sqltlog_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_sqltlog_volume_serial.find("Not Installed") == -1
+
+- name: Create Partiion for SQL Backup Disk
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_sqlbackup_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_sqlbackup_disk_number | int}}"
+  when: ansible_facts.system_info.sql_facts.sql_sqlbackup_volume_serial.find("Not Installed") == -1
+
+- name: Create Partiion for SQL TEMPDB Disk
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_tempdb_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_tempdb_disk_number | int}}"
+  when: ansible_facts.system_info.sql_facts.sql_tempdb_disk_number != "Not Installed"
+
+- name: Create Partiion for Instance Storage 0
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_instance_storage_0_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_0_disk_number | int}}"
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_0_disk_number != "Not Installed"
+
+- name: Create Partiion for Instance Storage 1
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_instance_storage_1_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_1_disk_number | int}}"
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_1_disk_number != "Not Installed"
+
+
+## Format DIsk
+- name: Format SQL Backup Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_sqlbackup_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_sqlbackup_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_sqlbackup_volume_serial.find("Not Installed") == -1
+
+
+- name: Create Partiion for SYSTEMDB Disk
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.sql_facts.sql_systemdb_disk_number | int}}"
+
+- name: Format SYSTEMDB Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_systemdb_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+
+- name: Format Instance Storage 0 Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_tempdb_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_tempdb_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_tempdb_disk_number != "Not Installed"
+
+- name: Format Instance Storage 0 Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_0_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_0_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_0_disk_number != "Not Installed"
+
+- name: Format Instance Storage 1 Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_1_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.sql_facts.sql_instance_storage_1_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+  when: ansible_facts.system_info.sql_facts.sql_instance_storage_1_disk_number != "Not Installed"
+
+
+

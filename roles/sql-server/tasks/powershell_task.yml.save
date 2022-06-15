@@ -1,0 +1,22 @@
+
+---
+# tasks file for sql-server
+
+# Running Power Shell Scripts
+#############################
+
+- include_vars: "{{ansible_facts.system_info.local_facts.server_environment + '-' + ansible_facts.system_info.local_facts.server_owner + '-gmsa.yml'}}"
+
+- name: install "{{ansible_facts.system_info.local_facts.server_environment}} - {{ansible_facts.system_info.local_facts.server_owner}} - gmsa service accounts"
+  win_shell: "C:/scripts/add-gmsa-accounts.ps1 -GMSAAccount '{{item}}$'"
+  with_items: "{{ gmsa_users }}"
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: "{{ansible_facts.system_info.local_facts.server_environment}} - {{ansible_facts.system_info.local_facts.server_owner}} - fix folder permissions"
+  win_shell: C:\scripts\grant-sqlfolderpermissions.ps1 -GMSAAccount "{{item}}"
+  with_items: "{{ gmsa_users }}"
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: initialize ec2 instance store on Startup
+  win_shell: C:\Programdata\Amazon\ec2-Windows\Launch\Scripts\InitializeDisks.ps1 -Schedule
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"

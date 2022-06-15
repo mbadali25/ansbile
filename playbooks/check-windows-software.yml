@@ -1,0 +1,58 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: "Check for all software installed"
+  hosts: "{{ hosts | default('PAWSITUTIL05') }}"
+  gather_facts: true
+  tasks:
+    
+    - name: Create directory structure for facts
+      win_file:
+        path: C:\scripts
+        state: directory
+      when: ansible_os_family == "Windows"
+
+    - name: Create directory structure for facts
+      win_file:
+        path: C:\scripts\facts
+        state: directory
+      when: ansible_os_family == "Windows"
+
+    - name: Remove old script file
+      ansible.windows.win_file:
+        path: C:\scripts\softwarelist.ps1
+        state: absent
+
+    - name: "Deploy Powershell script (custom Windows facts)"
+      win_copy:
+        src: "/etc/ansible/files/facts/softwarelist.ps1"
+        dest: 'C:\scripts\facts\softwarelist.ps1'
+      when: ansible_os_family == "Windows"
+
+
+    - name: "Deploy Powershell script (custom Windows facts)"
+      win_copy:
+        src: "/etc/ansible/files/facts/instance_info.ps1"
+        dest: 'C:\scripts\facts\instance_info.ps1'
+      when: ansible_os_family == "Windows"
+
+    - name: "Gather custom facts"
+      win_shell: C:\scripts\facts\softwarelist.ps1
+      register: results
+ 
+    - name: "Gather Custom Facts"
+      setup:
+        fact_path: 'C:\scripts\facts'
+    
+    - name: "Re-run setup to use custom facts"
+      setup: ~
+       
+ #    when: ansible_os_family == "Windows"
+#    - name: "View software list in Ansible by name"
+ #     debug:
+  #      msg: "{{ item }}"
+   #   loop: "{{ results.stdout}}"
+
+
+    - name: reload ansible_local
+      setup: filter=ansible_local

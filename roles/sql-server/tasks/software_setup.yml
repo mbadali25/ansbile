@@ -1,0 +1,84 @@
+---
+# tasks file for sql-server
+#Sets up and insalls everything via chocolatey
+
+##################################################################
+# This is used to make the code cleaner and easier to ready
+##################################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+##################################################################
+# Tasks
+##################################################################
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+  
+- name: Flush Handlers after Reboot
+  meta: flush_handlers
+
+- name: standard software (all sql servers) via package manager
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ software_1 }}"
+  ignore_errors: yes
+  when: ansible_os_family == "Windows"
+
+- name: standard software (data-and-analytics) via package manager part 1
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ bi_software_1 }}"
+  ignore_errors: yes
+  when: ansible_os_family == "Windows" and server_owner== "data-and-analytics"
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- name: Flush Handlers after Reboot
+  meta: flush_handlers
+
+- name: standard software (data-and-analytics) via package manager part 2
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ bi_software_2 }}"
+  ignore_errors: yes
+  when: ansible_os_family == "Windows" and server_owner== "data-and-analytics"
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- meta: flush_handlers
+
+- name: standard software (data-and-analytics) via package manager Python 3.7.7
+  win_chocolatey:
+    name: python
+    version: 3.10.0
+    state: absent
+  when: ansible_os_family == "Windows" and server_owner== "data-and-analytics"
+
+

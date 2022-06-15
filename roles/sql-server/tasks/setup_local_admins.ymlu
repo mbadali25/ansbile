@@ -1,0 +1,19 @@
+---
+# tasks file for windows-server
+#Standard Configurations for Windows Server Setup
+
+include_vars:
+  file: "{{ansible_facts.system_info.local_facts.server_environment}}-{{ansible_facts.system_info.local_facts.server_owner}}-admin-groups"
+
+## adding the group managed service accounts based on environment 
+
+- name: generate vaiable gmsa group by environment
+  debug:
+    msg: "{{item}}"
+  with_item: "{{admin_groups}}
+
+#- name: output results
+#  debug:
+#    mgs: "{{ item }}"
+#  with_items: "{{admin_group | default }}"
+

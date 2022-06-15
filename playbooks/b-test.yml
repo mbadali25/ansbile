@@ -1,0 +1,27 @@
+---
+- hosts: DAWSBISQLDB01
+  gather_facts: true
+  tasks:
+    - name: Get Disk Info
+      win_disk_facts:
+
+    - name: Test
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{  ansible_facts.disks }}"
+      when: item.number == 1
+
+    - name: Create Partiion for USERDB Disk
+      win_partition:
+        partition_size: -1
+        disk_number: 1
+        drive_letter: D
+
+
+    - name: Format USERDB Parition
+      win_format:
+        file_system: NTFS
+        new_label: "{{ansible_facts.system_info.sql_facts.sql_userdb_drive_label }}"
+        full: False
+        allocation_unit_size: 65536
+        drive_letter: D

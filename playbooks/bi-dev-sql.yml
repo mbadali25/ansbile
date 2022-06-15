@@ -1,0 +1,7 @@
+---
+- hosts: development_bi_sql
+  gather_facts: true
+  roles:
+#        - windows-server
+        - sql-server
+

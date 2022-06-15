@@ -1,0 +1,49 @@
+---
+# tasks file for sql-server
+
+# create SQL Directories
+######################################
+
+- name: create sites directory
+  win_file:
+    path: D:\sites
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: create iis logs directory
+  win_file:
+    path: D:\sites\iis_logs
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: create iis logs directory
+  win_file:
+    path: D:\sites\iis_logs\websites
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: create site backup
+  win_file:
+    path: D:\site_backup
+    state: directory
+  when: ansible_os_family == "Windows"
+
+### Associate Applications Directories
+
+- name: create iis site api directory
+  win_file:
+    path: D:\sites\api
+    state: directory
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.local_facts.server_owner == "associate-applications"
+
+- name: create iis site cmp_tasks directory
+  win_file:
+    path: D:\sites\task
+    state: directory
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.local_facts.server_owner == "associate-applications"
+
+- name: create iis site portal directory
+  win_file:
+    path: D:\sites\portal
+    state: directory
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.local_facts.server_owner == "associate-applications"

@@ -1,0 +1,9 @@
+---
+#Adds Users to Local Admin Group
+- name: Add Standard Users to local server group
+  win_group_membership:
+    name: "{{localusergroup}}"
+    members:
+      - "{{item}}"
+    state: present
+  loop: "{{adusergroups}}"

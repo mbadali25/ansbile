@@ -1,0 +1,42 @@
+#Default Values for the role
+
+# Option to supress reboot on installations
+supress_reboot: False
+
+# Specifies what user(s) and group(S) will be added to the local admin groups
+
+web_server_admin_groups:
+  - CORP\ServerAdmins
+
+
+# Specifies what software will be installed via package manager
+# This is broken up to ensure there aren't reboot dependencies for this
+
+
+# General Software
+software_1:
+  - SQL2008R2.NativeClient
+  - SQL2012.NativeClient
+
+# Associate-Applications Team
+
+associate_applications_software:
+  - SQL2012.ClrTypes
+  - SQL2012.DACFramework
+  - sqlserver-odbcdriver
+  - SQL2014.ClrTypes
+  - SQL2016-smo
+  - sql2016-clrtypes
+  - sql2016-dacframework
+  - msoledbsql
+  - vcredist140
+  - vcredist2015
+  - webdeploy
+  - webpi
+  - MSXML6.SP1
+  - aspnetmvc4.install
+
+associate_applicatoins_iis_sites:
+  - api
+  - portal
+  - task

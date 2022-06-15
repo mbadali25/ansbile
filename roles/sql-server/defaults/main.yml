@@ -1,0 +1,36 @@
+#Default Values for the role
+
+# Option to supress reboot on installations
+supress_reboot: False
+
+# Specifies what user(s) and group(S) will be added to the local admin groups
+
+sql_admin_groups:
+  - CORP\ITSQLAdmins
+# SQL Server Version
+sql_version:
+  - "2019"
+
+# Specifies what software will be installed via package manager
+# This is broken up to ensure there aren't reboot dependencies for this
+
+
+# General Software
+software_1:
+  - sql-server-management-studio
+  - sqlserver-odbcdriver
+  - msoledbsql  
+
+# Data-and-Analytics Team
+
+bi_software_1:
+  - sql-server-management-studio
+  - vcredist140
+  - netfx-4.5.2-devpack
+  - sqlserver-odbcdriver
+  - redshift-odbc
+  - taskfactory-invh
+  - msoledbsql
+
+bi_software_2:
+  - pragmaticworkbench

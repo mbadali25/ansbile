@@ -1,0 +1,14 @@
+
+---
+# tasks file for web-server
+
+# Running Power Shell Scripts
+#############################
+
+- include_vars: "{{ansible_facts.system_info.local_facts.server_environment + '-' + ansible_facts.system_info.local_facts.server_owner + '-gmsa.yml'}}"
+
+- name: install "{{ansible_facts.system_info.local_facts.server_environment}} - {{ansible_facts.system_info.local_facts.server_owner}} - gmsa service accounts"
+  win_shell: "C:/scripts/add-gmsa-accounts.ps1 -GMSAAccount {{item }}"
+  with_items: "{{ gmsa_users }}"
+  ignore_errors: yes
+

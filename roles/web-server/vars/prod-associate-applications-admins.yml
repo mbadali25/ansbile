@@ -1,0 +1,9 @@
+---
+# vars file for web-server role
+# environment: prod
+# team: associate-applications
+# standard admin groups
+#Specifies what user(s) and group(S) will be added to the local admin group
+
+admin_groups:
+  - CORP\RTM_PROD_Server_Admins

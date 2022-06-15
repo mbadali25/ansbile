@@ -1,0 +1,7 @@
+---
+- hosts: PAWSE01CBIUTL01
+  gather_facts: true
+  roles:
+#        - windows-server
+        - bi-apps
+#        - sql-server

@@ -1,0 +1,6 @@
+---
+- name: Chocolatey Update All
+  win_chocolatey:
+    name: all
+    state: latest
+  when: ansible_os_family == "Windows"

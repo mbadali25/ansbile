@@ -1,0 +1,160 @@
+---
+# tasks file for sql-server
+#Standard Configurations SQL Server
+
+## Verify SQL Settings Configurations
+#################################################################
+
+- name: check sql max memory settings
+  win_shell: |
+    $query="select name,value,value_inuse from sys.configurations where name like '%max server memory%'"
+    (Invoke-Sqlcmd -Query $query).value_in_use
+  register: sql_max_memory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: Check SQL MDP Settings
+  win_shell: |
+    $query="select name,value,value_inuse from sys.configurations where name like '%max degree of parallelism%'"
+    (Invoke-Sqlcmd -Query $query).value_in_use
+  register: sql_mdp
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+## Configure SQL Settings
+#################################################################
+
+- name: configure sql max memory
+  win_shell: |
+    $query="
+     sp_configure 'show advanced options', 1;
+     GO
+     RECONFIGURE;
+     GO
+     sp_configure 'max server memory', {{ ansible_facts.system_info.sql_facts.sql_max_memory_reccomendation }};
+     GO
+     RECONFIGURE;
+     GO
+     "
+     Invoke-SQLCMD -Query $query
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" and  ansible_facts.system_info.sql_facts.sql_max_memory_reccomendation != sql_max_memory
+
+- name: configure mdp
+  win_shell: |
+    $query="
+     sp_configure 'show advanced options', 1;
+     GO
+     RECONFIGURE WITH OVERRIDE;
+     GO
+     EXEC sp_configure 'max degree of parallelism', {{ ansible_facts.system_info.sql_facts.edw_max_degrees_of_parallelism }};
+     GO
+     RECONFIGURE WITH OVERRIDE;
+     GO
+     "
+     Invoke-SQLCMD -Query $query
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" and ansible_facts.system_info.sql_facts.edw_max_degrees_of_parallelism != sql_mdp
+
+## setup maintenance task
+###############################################################
+- name: create sql maintenance jobs
+  win_shell: C:\scripts\sql_setup_maintenance_tasks.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+## setup sql move backups to s3 task
+##############################################################
+- name: create sql job move backups to s3
+  win_shell: |
+    $query="
+    USE [msdb]
+    IF EXISTS (SELECT job_id FROM msdb.dbo.sysjobs_view WHERE name = N'Database_Upload_S3_Bucket') GOTO EndSave
+    BEGIN
+      GOTO CreateJob
+    END 
+ 
+     CreateJob:
+    BEGIN TRANSACTION
+    DECLARE @ReturnCode INT
+    SELECT @ReturnCode = 0
+    /****** Object:  JobCategory [Database Maintenance]    Script Date: 8/26/2021 9:33:58 AM ******/
+    IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
+    BEGIN
+    EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+    END
+
+    DECLARE @jobId BINARY(16)
+    EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'Database_Upload_S3_Bucket',
+                    @enabled=1,
+                    @notify_level_eventlog=0,
+                    @notify_level_email=0,
+                    @notify_level_netsend=0,
+                    @notify_level_page=0,
+                    @delete_level=0,
+                    @description=N'Uploads all backups to S3 bucket
+
+    It will validate if the backups were uploaded to S3 then delete them from K:\SQLBackup',
+                    @category_name=N'Database Maintenance',
+                    @owner_login_name=N'sa', @job_id = @jobId OUTPUT
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+    /****** Object:  Step [powershell_write_to_s3_and_delete]    Script Date: 8/26/2021 9:33:58 AM ******/
+    EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'powershell_write_to_s3_and_delete',
+                    @step_id=1,
+                    @cmdexec_success_code=0,
+                    @on_success_action=1,
+                    @on_success_step_id=0,
+                    @on_fail_action=2,
+                    @on_fail_step_id=0,
+                    @retry_attempts=0,
+                    @retry_interval=0,
+                    @os_run_priority=0, @subsystem=N'CmdExec',
+                    @command=N'Powershell C:\scripts\move_sql_backups.ps1',
+                    @output_file_name=N'C:\scripts\s3_write_job_output.txt',
+                    @flags=50
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+    EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+    EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Nightly at Midnight',
+                    @enabled=1,
+                    @freq_type=4,
+                    @freq_interval=1,
+                    @freq_subday_type=1,
+                    @freq_subday_interval=0,
+                    @freq_relative_interval=0,
+                    @freq_recurrence_factor=0,
+                    @active_start_date=20210824,
+                    @active_end_date=99991231,
+                    @active_start_time=0,
+                    @active_end_time=235959,
+                    @schedule_uid=N'8b7c9b25-f0d0-4004-902a-b732bf248db6'
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+    EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+    IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+    COMMIT TRANSACTION
+    GOTO EndSave
+    QuitWithRollback:
+        IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+    EndSave:
+    GO"
+    Invoke-SQLCMD -Query $query
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+# enable sql backup compression as default
+#################################################################
+
+- name: set sql backup compression as a default
+  win_shell: |
+    $query="
+    EXEC sp_configure 'backup compression default', 1 ;  
+    RECONFIGURE;  
+    GO"
+    Invoke-SQLCMD -Query $query
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" 
+
+# restart sql server service
+#################################################################
+- name: Restart sql server service
+  win_service:
+    name: MSSQLSERVER
+    state: restarted
+    force_dependent_services: true
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" and ansible_facts.system_info.sql_facts.edw_max_degrees_of_parallelism != sql_mdp and ansible_facts.system_info.sql_facts.sql_max_memory_reccomendation != sql_max_memory 
+

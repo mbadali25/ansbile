@@ -1,0 +1,17 @@
+---
+# tasks file for sql-server
+# This task will configure SQL Server Services
+
+- name: Ensure SQL Server Agent Service is Running
+  win_service:
+    name: SQLSERVERAGENT
+    state: started
+    start_mode: delayed
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: Ensure SQL Server Service is Delayed Autostart
+  win_service:
+    name: MSSQLSERVER
+    state: started
+    start_mode: delayed
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"

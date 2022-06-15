@@ -1,0 +1,12 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- hosts: windows
+  tasks:
+
+    - name: Install Datadog Agent
+      win_chocolatey:
+        name: datadog-invh
+        state: present
+      when: ansible_facts.system_info.local_facts.datadog_exclusion == "false"
+      ignore_errors: yes

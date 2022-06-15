@@ -1,0 +1,60 @@
+---
+# tasks file for sql-server 
+# This creates directory structure
+
+# create SQL Directories
+- name: create directory structure
+  win_file:
+    path: C:\scripts
+    state: directory
+  when: ansible_os_family == "Windows"
+
+# Copying Scripts To Server
+###########################
+
+- name: script to server move_sql_backups.ps1
+  win_copy:
+    src: "/etc/ansible/files/scripts/move_sql_backups.ps1"
+    dest: C:\scripts\move_sql_backups.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: script to install sql install_sql_server.ps1
+  win_copy:
+    src: "/etc/ansible/files/scripts/install_sql_server.ps1"
+    dest: C:\scripts\install_sql_server.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" 
+
+- name: "script to server - restore_databases.ps1"
+  win_copy:
+    src: "/etc/ansible/files/scripts/restore_databases.ps1"
+    dest: C:\scripts\restore_databases.ps1
+
+- name: script to server add_gmsa_accounts.ps1"
+  win_copy:
+    src: "/etc/ansible/files/scripts/add-gmsa-accounts.ps1"
+    dest: C:\scripts\add-gmsa-accounts.ps1
+  when: ansible_os_family == "Windows"
+
+- name: "script to server - grant-sqlfolderpermissions"
+  win_copy:
+    src: "/etc/ansible/files/scripts/grant-sqlfolderpermissions.ps1"
+    dest: C:\scripts\grant-sqlfolderpermissions.ps1
+  when: ansible_os_family == "Windows"
+
+- name: "script to server - sql_setup_maintenance_tasks.ps1"
+  win_copy:
+    src: "/etc/ansible/files/scripts/sql_setup_maintenance_tasks.ps1"
+    dest: C:\scripts\sql_setup_maintenance_tasks.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: "script to server - wsfc_setup.ps1"
+  win_copy:
+    src: "/etc/ansible/files/scripts/wsfc_setup.ps1"
+    dest: C:\scripts\wsfc_setup.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: "script to server - sql_ag_setup.ps1"
+  win_copy:
+    src: "/etc/ansible/files/scripts/sql_ag_setup.ps1"
+    dest: C:\scripts\sql_ag_setup.ps1
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"

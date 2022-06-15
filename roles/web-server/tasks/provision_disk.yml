@@ -1,0 +1,35 @@
+---
+# tasks file for web-server
+# This creates provisions disk
+
+- name: Get Disk Info
+  win_disk_facts:
+
+#Initalize Disk
+- name: Initialize Additional Disk
+  win_initialize_disk:
+   disk_number: "{{ item.number | int }}"
+   style: GPT
+   force: yes
+  with_items: "{{ansible_facts.disks}}"
+  when: item.serial_number.find(ansible_facts.system_info.local_facts.volume_1_volume_serial) != -1 and item.partition_style != "GPT"
+
+## Create Paritions
+
+- name: Create Partiion for Additional Disk
+  win_partition:
+   drive_letter: "{{ ansible_facts.system_info.local_facts.volume_1_drive_letter }}"
+   partition_size: -1
+   disk_number: "{{ansible_facts.system_info.local_facts.volume_1_disk_number | int}}"
+
+- name: Format Additional Parition
+  win_format:
+   file_system: NTFS
+   drive_letter: "{{ansible_facts.system_info.local_facts.volume_1_drive_letter }}"
+   new_label: "{{ansible_facts.system_info.local_facts.volume_1_drive_label }}"
+   full: False
+   allocation_unit_size: 65536
+
+
+
+

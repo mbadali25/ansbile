@@ -1,0 +1,33 @@
+---
+# tasks file for web-server
+#Standard Configurations for Windows Server Setup
+
+- include_vars: "{{ansible_facts.system_info.local_facts.server_environment + '-' + ansible_facts.system_info.local_facts.server_owner + '-admins.yml'}}"
+- include_vars: "{{ansible_facts.system_info.local_facts.server_environment + '-' + ansible_facts.system_info.local_facts.server_owner + '-gmsa.yml'}}"
+
+## adding the group managed service accounts based on environment 
+
+- name: "{{ ansible_facts.system_info.local_facts.server_environment}} - {{ansible_facts.system_info.local_facts.server_owner}} -  add gmsa users to administrators group"
+  win_group_membership:
+    name: Administrators
+    members:
+      - "{{item}}$"
+    state: present
+  loop: "{{ gmsa_users }}"
+
+- name: add standarnd web server admins
+  win_group_membership:
+    name: Administrators
+    members:
+      - "{{item}}"
+    state: present
+  loop: "{{ web_server_admin_groups }}"
+
+- name: "{{ ansible_facts.system_info.local_facts.server_environment}} - {{ansible_facts.system_info.local_facts.server_owner}} -  add standard local admins"
+  win_group_membership:
+    name: Administrators
+    members:
+      - "{{item}}"
+    state: present
+  loop: "{{ admin_groups }}"
+

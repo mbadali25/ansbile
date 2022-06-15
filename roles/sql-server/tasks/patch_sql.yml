@@ -1,0 +1,47 @@
+---
+# tasks file for sql-server
+# This task will prepare the system and install SQL Server 2016 SP1
+# Then it will also Install Service Pack 2 and CU17
+
+# Pending Reboot Check
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- meta: flush_handlers
+
+#Reboot if necessary
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- meta: flush_handlers
+
+#Refresh Facts after installation
+- name: Refresh Ansible Facts
+  setup:
+
+#Patch SQL Server to SP3
+- name: patch sql server 2016 to sp3
+  win_command: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQL2016/SQLUpdates/SQL2016SP3/SETUP.EXE /Action=Patch /AllInstances /Quiet /IAcceptSQLServerLicenseTerms"
+  when: ansible_facts.system_info.sql_facts.sql_patch_level == "13.2.5026.0"
+
+#Reboot if necessary
+- name: Ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- meta: flush_handlers
+
+#Refresh Facts after installation
+- name: Refresh Ansible Facts
+  setup:

@@ -1,0 +1,8 @@
+---
+# vars file for windows-server
+#Specifies what user(s) and group(S) will be added to the local admin group
+gmsa:
+  - gMSAdevSQLAS
+  - gMSAdevSQLIS
+  - gMSAdevSQLagnt
+  - gMSAdevSQLsvc

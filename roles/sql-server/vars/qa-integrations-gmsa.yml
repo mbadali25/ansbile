@@ -1,0 +1,10 @@
+---
+# vars file for sql-role
+# environment: qa
+# team: integrations
+# standard gmsa users
+#Specifies what user(s) and group(S) will be added to the local admin group
+
+gmsa_users:
+  - QAINTSQLsvc
+  - QAINTSQLangt

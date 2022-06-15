@@ -1,0 +1,96 @@
+---
+# tasks file for web-server
+#Standard Configurations for Windows Server Setup
+
+- include_vars: "{{ansible_facts.system_info.local_facts.server_environment + '-' + ansible_facts.system_info.local_facts.server_owner + '-sites.yml'}}"
+
+## adding the group managed service accounts based on environment 
+
+
+### IIS App Pools
+
+- name: IIS App Pool Setup | api app pool
+  win_iis_webapppool:
+    name: "{{ api_site_app_pool }}"
+    state: started
+    attributes:
+      managedRuntimeVersion: v4.0
+      autoStart: yes
+
+
+- name: IIS App Pool Setup | portal app pool
+  win_iis_webapppool:
+    name: "{{ portal_site_app_pool }}"
+    state: started
+    attributes:
+      managedRuntimeVersion: v4.0
+      autoStart: yes
+
+
+- name: IIS App Pool Setup | task app pool
+  win_iis_webapppool:
+    name: "{{ task_site_app_pool }}"
+    state: started
+    attributes:
+      managedRuntimeVersion: v4.0
+      autoStart: yes
+
+
+### IIS Web Apps
+
+- name: IIS Setup | api site setup
+  community.windows.win_iis_website:
+    name: "{{ api_site_name }}"
+    application_pool: "{{ api_site_app_pool }}"
+    state: started
+    port: 80
+    ip: "{{ ansible_facts.system_info.local_facts.primary_ip }}"
+    hostname: "{{ api_site_host_name }}"
+    physical_path: "{{ api_site_directory }}"
+    parameters: logfile.directory:D:\iis_logs\websites\api|logfile.period:Hourly|logFile.logFormat:W3C
+
+- name: IIS Setup | portal site setup
+  community.windows.win_iis_website:
+    name: "{{ portal_site_name }}"
+    application_pool: "{{ portal_site_app_pool }}"
+    state: started
+    port: 80
+    ip: "{{ ansible_facts.system_info.local_facts.primary_ip }}"
+    hostname: "{{ portal_site_host_name }}"
+    physical_path: "{{ portal_site_directory }}"
+    parameters: logfile.directory:D:\iis_logs\websites\portal|logfile.period:Hourly|logFile.logFormat:W3C
+
+- name: IIS Setup | task site setup
+  community.windows.win_iis_website:
+    name: "{{ task_site_name }}"
+    application_pool: "{{ task_site_app_pool }}"
+    state: started
+    port: 80
+    ip: "{{ ansible_facts.system_info.local_facts.primary_ip }}"
+    hostname: '*'
+    physical_path: "{{ task_site_directory }}"
+    parameters: logfile.directory:D:\iis_logs\websites\task|logfile.period:Hourly|logFile.logFormat:W3C
+
+# IIS Bindings
+
+- name: IIS Setup | api add a HTTPS binding
+  win_iis_webbinding:
+    name: "{{ api_site_name }}"
+    protocol: https
+    port: 443
+    ip: "{{ ansible_facts.system_info.local_facts.primary_ip }}"
+    certificate_hash:  "{{ ansible_facts.system_info.local_facts.iis_hostname_ssl_cert_hash }}"
+    host_header: "{{ api_site_host_name }}"
+    ssl_flags: 1
+    state: present
+
+- name: IIS Setup | portal add a HTTPS binding
+  win_iis_webbinding:
+    name: "{{ portal_site_name }}"
+    protocol: https
+    port: 443
+    ip: "{{ ansible_facts.system_info.local_facts.primary_ip }}"
+    certificate_hash:  "{{ ansible_facts.system_info.local_facts.iis_hostname_ssl_cert_hash }}"
+    host_header: "{{ portal_site_host_name }}"
+    ssl_flags: 1
+    state: present

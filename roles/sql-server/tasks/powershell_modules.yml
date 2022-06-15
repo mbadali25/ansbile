@@ -1,0 +1,43 @@
+---
+# tasks file for sql-server
+# This installs all the necessary powershell modules
+# Running Power Shell Scripts
+#############################
+
+# Load required powershell modules
+- name: powershell | Check for SQLServer DSC Powershell module
+  win_psmodule:
+    name: SQLServerDsc
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: powershell | Check for Storage DSC Powershell module
+  win_psmodule:
+    name: StorageDsc
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: powershell | Check for ServerManager Powershell module
+  win_psmodule:
+    name: ServerManager
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: powershell | Ensure that DBA Tools module is present
+  win_psmodule:
+    name: dbatools
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+
+- name: powershell | Check for xNetworking Powershell module
+  win_psmodule:
+    name: xNetworking
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+    
+- name: powershell | ensure that the SQLServer module is present
+  win_psmodule:
+    name: SQLServer
+    state: present
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver" or ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver" or ansible_facts.system_info.sql_facts.sql_server_role == "reportingserver"
+

@@ -1,0 +1,39 @@
+---
+# tasks file for sql-server
+#Sets up and insalls everything via chocolatey
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+  
+- meta: flush_handlers
+
+- name: standard software via package manager
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ software_1 }}"
+  ignore_errors: yes
+  when: ansible_os_family == "Windows"
+
+- name: standard software (associate-applications) via package manager part 1
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ associate_applications_software }}"
+  ignore_errors: yes
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.local_facts.server_owner == "associate-applications"
+
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- meta: flush_handlers

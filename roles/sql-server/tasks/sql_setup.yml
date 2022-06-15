@@ -1,0 +1,137 @@
+---
+# tasks file for sql-server
+# This task will prepare the system and install SQL Server
+
+# Getting Environment Variable
+- name: Set ans_env environment fact for short hand
+  set_fact:
+    ans_env: "{{ ansible_facts.system_info.local_facts.server_environment }}"
+
+- name: Default Source SQL Installation Media
+  set_fact:
+    sql_media: "SQL2019-{{ ans_env }}.zip"
+
+- name: Source SQL Server Entreprise Meida | {{ ansible_facts.system_info.local_facts.server_owner }}
+  set_fact:
+    sql_media: "SQL2019-Enterprise-{{ ans_env }}.zip"
+    when: ansible_facts.system_info.local_facts.server_owner == "data-and-analytics" and ans_env == "prod"
+
+- name: Set the destination file name of the SQL installation media
+  set_fact:
+    sql_zip_destination_name: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQL2019.zip"
+
+- name: Set the destination folder name to extract the SQL installation files
+  set_fact:
+    sql_extract_destination_name: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQL2019"
+
+- name: Set SQL S3 Download Path
+  set_fact:
+    sql_s3_path: "s3://infra-software-shared-services-invh/chocolatey-packages/sql/server/2019/SQL2019-{{ ans_env }}.zip"
+
+
+- name: Set SSRS S3 Download Path
+  set_fact:
+    ssrs_s3_path: "s3://infra-software-shared-services-invh/chocolatey-packages/sql/server/2019/SQLServerReportingServices.exe"
+
+- name: Set the destination folder name to download SQL Server Reporting Services
+  set_fact:
+    ssrs_download_destination_name: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQLServerReportingServices.exe"
+
+- name: Set the SSRS Install Edition for Non Production
+  set_fact:
+    ssrs_edition: "Dev"
+  when: ans_env != "prod" and server_role == "reportingserver"
+
+
+##############################################################
+# This is used to make the code cleaner and easier to ready
+#############################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+- name: Set the path to extract SQL Installation Media
+  set_fact:
+    sql_extract_file_path: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:/SQL2019"
+
+
+# Checks to see if SQL Server is already Installed
+
+- name: ensure the path to drop the sql installation media exists
+  win_stat:
+    path: "{{ ansible_facts.system_info.sql_facts.sql_systemdb_drive_letter }}:"
+  register: sqlmediaroot
+
+- name: ensure installation media extraction path is empty
+  win_stat:
+    path: "{{ sql_zip_destination_name }}"
+  register: sql_zip
+
+- name: download sql install files
+  win_shell: Invoke-WebRequest -Uri (aws s3 presign "{{ sql_s3_path }}" --expires-in 60) -OutFile "{{ sql_zip_destination_name }}"
+  when: not sql_zip.stat.exists and sqlmediaroot.stat.exists and server_role != "reportingserver"
+
+- name: ensure sql installation media path does not exists
+  ansible.windows.win_stat:
+    path: "{{ sql_extract_file_path }}"
+  register: sql_extract_path
+
+- name: Extract SQL Install Files
+  win_shell: "Expand-Archive {{ sql_zip_destination_name }} -DestinationPath {{ sql_extract_destination_name }} -Force"
+  when: not sql_extract_path.stat.exists and server_role != "reportingserver"
+
+# Copies Configuration File Based on Environment and Owner
+
+- name: "{{ server_role }} - copy {{ server_owner }} {{ ans_env }} sql config.ini"
+  win_copy:
+    src: "/etc/ansible/files/configs/sql/{{ ans_env }}/{{ server_owner }}/{{ ans_env }}-{{ server_owner }}-sql-{{ server_role }}.ini"
+    dest: "{{ sql_extract_destination_name }}/SQLInstall/ConfigurationFile.ini"
+  when: ansible_os_family == "Windows" and server_role | length > 0 and ansible_facts.system_info.sql_facts.sql_edition == "Not Installed" and sql_extract_path.stat.exists and server_role != "reportingserver"
+
+# Download SQL Server Reporting Services
+
+- name: ensure SSRS installation media extraction path is empty
+  win_stat:
+    path: "{{ ssrs_download_destination_name }}"
+  register: ssrs_download_file
+
+- name: download ssrs install files
+  win_shell: Invoke-WebRequest -Uri (aws s3 presign "{{ ssrs_s3_path }}" --expires-in 60) -OutFile "{{ ssrs_download_destination_name }}"
+  when: not ssrs_download_file.stat.exists and server_role == "reportingserver"
+
+
+# Installs SQL Server
+
+- name: install sql server
+  win_command: "{{ sql_extract_destination_name }}/SQLInstall/setup.exe /ConfigurationFile={{ sql_extract_destination_name }}/SQLInstall/ConfigurationFile.ini"
+  become: yes
+  become_user: SYSTEM
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_edition == "Not Installed" and server_role != "reportingserver"
+   
+# Install SSRS
+
+- name: install ssrs server
+  win_shell: "{{ ssrs_download_destination_name }} /quiet /norestart /IAcceptLicenseTerms /Edition={{ ssrs_edition  }}"
+  become: yes
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_edition == "Not Installed" and server_role == "reportingserver"
+
+# Reboot if necessary
+- name: ensure that a reboot is not pending
+  when: ansible_reboot_pending
+  debug:
+    msg: 'Pending reboot detected'
+  changed_when: true
+  notify: reboot windows
+
+- name: Flush Handlers after reboot
+  meta: flush_handlers
+
+# refresh facts after installation
+
+- name: Refresh Ansible Facts
+  setup:

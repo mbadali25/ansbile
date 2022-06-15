@@ -1,0 +1,13 @@
+---
+# vars file for sql-role
+# environment: prod
+# team: data-and-analytics
+# standard gmsa users
+#Specifies what user(s) and group(S) will be added to the local admin group
+
+gmsa_users:
+  - prodBISQLsvc
+  - prodBISQLagnt
+  - prodBISQLAS
+  - prodBISQLRS
+

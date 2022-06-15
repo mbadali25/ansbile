@@ -1,0 +1,41 @@
+---
+# tasks file for sql-server
+# tasks file for configuring sql server availability group
+
+
+##############################################################
+# This is used to make the code cleaner and easier to ready
+#############################################################
+
+- name: Set the name of the server role to server_sql [Shortens Statements]
+  set_fact:
+    server_role: "{{ ansible_facts.system_info.sql_facts.sql_server_role }}"
+
+- name: Set the name of the server owner to server_owner [Shortens Statements]
+  set_fact:
+    server_owner: "{{ ansible_facts.system_info.local_facts.server_owner }}"
+
+# Task
+
+- name: copy sql_ag_setup.ps1
+  win_copy:
+    src: "/etc/ansible/files/scripts/sql_ag_setup.ps1"
+    dest: C:\scripts\sql_ag_setup.ps1
+  when: ansible_os_family == "Windows" and server_role == "databaseserver"
+
+# Load Variable File that was updated
+- name: Include db_servers.yml variable file
+  include_vars: db_servers.yml
+
+# Creates SQL AG
+#########################################
+- name: setup SQL AG
+  win_shell: "C:/scripts/sql_ag_setup.ps1"
+  when: ansible_hostname is search("01") or ansible_hostname is search("03")
+
+- name: Restart sql server service
+  win_service:
+    name: SQLSERVERAGENT
+    state: restarted
+    force_dependent_services: true
+

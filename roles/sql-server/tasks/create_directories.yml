@@ -1,0 +1,135 @@
+---
+# tasks file for sql-server
+
+# create SQL Directories
+######################################
+
+- name: create directory structure
+  win_file:
+    path: D:\SQLDATA
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: create directory structure
+  win_file:
+    path: L:\SQLLOG
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: create directory structure
+  win_file:
+    path: K:\SQLBackup
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: create directory structure
+  win_file:
+    path: T:\TEMPDB
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" or ansible_facts.system_info.sql_facts.sql_server_role == "integrationsserver"
+
+- name: create directory structure for scripts direcotry
+  win_file:
+    path: C:\scripts
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: create Analysis Services TEMPDB
+  win_file:
+    path: T:\OLAP\TEMPDB
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver"
+
+- name: create directory structure
+  win_file:
+    path: D:\OLAP\SQLDATA
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver"
+
+- name: create directory structure
+  win_file:
+    path: L:\OLAP\SQLLOG
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver"
+
+- name: create directory structure
+  win_file:
+    path: K:\OLAP\Backup
+    state: directory
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "analysisserver"
+
+- name: Add FullControl AccessRule for SQLBackup [Adminstrators]
+  ansible.windows.win_acl:
+    path: K:\SQLBackup
+    user: Administrators
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add FullControl AccessRule for SQLBackup [ITSQLAdmins]
+  ansible.windows.win_acl:
+    path: K:\SQLBackup
+    user: ITSQLAdmins
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add Read AccessRule for SQLBackup [AuthenitcatedUsers]
+  ansible.windows.win_acl:
+    path: K:\SQLBackup
+    user: 'Authenticated Users'
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add public company share
+  ansible.windows.win_share:
+    name: SQLBackup
+    description: SQL Backup Share
+    path: K:\SQLBackup
+    list: yes
+    full: Administrators,ITSQLAdmins,Authenticated Users
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add FullControl AccessRule for SQLBackup [Adminstrators]
+  ansible.windows.win_acl:
+    path: L:\SQLLOG
+    user: Administrators
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add FullControl AccessRule for SQLBackup [ITSQLAdmins]
+  ansible.windows.win_acl:
+    path: L:\SQLLOG
+    user: ITSQLAdmins
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Add Read AccessRule for SQLBackup [AuthenitcatedUsers]
+  ansible.windows.win_acl:
+    path: L:\SQLLOG
+    user: 'Authenticated Users'
+    rights: FullControl
+    type: allow
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+  when: ansible_os_family == "Windows" and ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+

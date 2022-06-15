@@ -1,0 +1,27 @@
+---
+# tasks file for sql-server role
+# this will complete configure and install all software required for the sql server role
+
+##################################################################
+- name: Update group_vars for ansible winrm connection to kerberos
+  lineinfile:
+    path: /etc/ansible/group_vars/all.yml
+    regexp: 'ansible_winrm_transport: '
+    line: "ansible_winrm_transport: credssp"
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include /etc/ansible/group_vars/all.yml
+  include_vars: /etc/ansible/group_vars/all.yml
+
+# Installs Required Software
+- name: installs software via package manager
+  include_tasks: software_setup.yml
+
+# Installs Python Modules
+#- name: installs required python modules
+#  include_tasks: python_modules.yml
+
+- name: setup local admins
+  include_tasks: setup_local_admins.yml
+

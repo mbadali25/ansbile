@@ -1,0 +1,11 @@
+---
+### You specify the hosts variable at run time
+### example absible-playbook windows-server-standards.yml -e "hosts=hostgroup"
+- name: "Gathers information about software and version on windows machine"
+  hosts: pawsitutil05
+  tasks:
+    - name: "Checking for Rapid7 Agent"
+      check_win_software:
+        - name: "Rapid7 Insight Agent"
+          version: "3.0.8.23"
+

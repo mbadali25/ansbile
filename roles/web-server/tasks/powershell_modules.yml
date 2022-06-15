@@ -1,0 +1,27 @@
+---
+# tasks file for sql-server
+# This installs all the necessary powershell modules
+# Running Power Shell Scripts
+#############################
+
+# Load required powershell modules
+- name: powershell | Check for Storage DSC Powershell module
+  win_psmodule:
+    name: StorageDsc
+    state: present
+
+- name: powershell | Check for ServerManager Powershell module
+  win_psmodule:
+    name: ServerManager
+    state: present
+
+- name: powershell | Check for xNetworking Powershell module
+  win_psmodule:
+    name: xNetworking
+    state: present
+ 
+
+- name: powershell | Check for xNetworking Powershell module
+  win_psmodule:
+    name: IISAdministration
+    state: present

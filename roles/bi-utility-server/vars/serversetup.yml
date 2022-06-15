@@ -1,0 +1,27 @@
+---
+# vars file for windows-server
+#Specifies what user(s) and group(S) will be added to the local admin group
+admingroups:
+  - CORP\BI_Admins
+  - CORP\BI_Dev_Server_Admin
+  - CORP\ITSQLAdmins
+
+#Specifies what software will be installed via chocolately
+chocolateysoftware:
+  - winmerge
+  - notepadplusplus
+  - visualstudio2017community
+  - sql-server-management-studio
+  - git
+  - vcredist2017
+  - msvisualcplusplus2013-redist
+  - sql2016-clrtypes
+  - sqlserver-odbcdriver
+  - sql2012.nativeclient
+  - ssdt17
+  - visualstudio2017sql
+  - microsoft-build-tools
+  - install ssms-tools-pack
+  - sqlserach
+  - redshift-odbc
+  - tsqlflex

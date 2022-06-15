@@ -1,0 +1,56 @@
+---
+# tasks file for sql-server 
+# Configuring Windows Server Failover Cluster
+
+##### Get Cluster Name
+##################################
+
+
+#Group Variable file for the cluster
+
+- name: Create Database Group to count 
+  group_by:
+    key: db_servers
+  register: db_servers_group
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+- name: Get Server count to determine if a cluster is needed
+  set_fact:
+    server_count: "{{ groups[item] | length }}"
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver" and item.startswith('db_servers')
+  loop: "{{ groups|flatten(levels=1) }}"
+
+- name: Output server_count
+  debug:
+    msg: "{{ server_count }}"
+  when: ansible_facts.system_info.sql_facts.sql_server_role == "databaseserver"
+
+# Update roles var file with server names and ip addresses
+###############################################################
+
+- name: Update group_vars file for db_servers server_1_name
+  lineinfile:
+    path: /etc/ansible/roles/sql-server/vars/db_servers.yml
+    regexp: 'server_1_name: '
+    line: "server_1_name: {{ ansible_hostname }}"
+  when: ansible_hostname is search("01") or ansible_hostname is search("03")
+  delegate_to: 127.0.0.1
+
+- name: Update group_vars file for db_servers server_2_name
+  lineinfile:
+    path: /etc/ansible/roles/sql-server/vars/db_servers.yml
+    regexp: 'server_2_name: '
+    line: "server_2_name: {{ ansible_hostname }}"
+  when: ansible_hostname is search("02") or ansible_hostname is search("04")
+  delegate_to: 127.0.0.1
+
+# Load Variable File that was updated
+- name: Include db_servers.yml variable file
+  include_vars: db_servers.yml
+
+
+# Runs Powershell to create windows cluster
+###########################################
+- name: Configure Windows Server Failover Cluster
+  win_shell: "C:/scripts/wsfc_setup.ps1"
+  when: ansible_hostname is search("01") or ansible_hostname is search("03")

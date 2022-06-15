@@ -1,0 +1,7 @@
+---
+# handlers file for roles
+- name: reboot windows
+  win_reboot:
+    reboot_timeout: 90
+    post_reboot_delay: 60
+  when: supress_reboot == False

@@ -1,0 +1,44 @@
+#Default Values for the role
+
+# Option to supress reboot on installations
+supress_reboot: False
+
+# Specifies what user(s) and group(S) will be added to the local admin groups
+
+sql_admin_groups:
+  - CORP\ITSQLAdmins
+
+
+# Specifies what software will be installed via package manager
+# This is broken up to ensure there aren't reboot dependencies for this
+
+#Specifies what software will be installed via chocolately
+software_1:
+  - winmerge
+  - notepadplusplus
+  - visualstudio2017community
+  - sql-server-management-studio
+  - git
+  - vcredist2017
+  - msvisualcplusplus2013-redist
+  - sql2016-clrtypes
+  - sqlserver-odbcdriver
+  - sql2012.nativeclient
+  - ssdt17
+  - microsoft-build-tools
+  - redshift-odbc
+  - tsqlflex
+
+software_2:
+  - sql-server-management-studio
+  - sqlserver-odbcdriver
+  - msoledbsql  
+
+software_3:
+  - vcredist140
+  - netfx-4.5.2-devpack
+  - taskfactory-invh
+  - msoledbsql
+
+software_4:
+  - pragmaticworkbench

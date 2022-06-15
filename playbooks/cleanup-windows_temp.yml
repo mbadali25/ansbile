@@ -1,0 +1,10 @@
+---
+### Sets host to be changed by a variable
+### Defaults to development
+- name: Cleans up all files under the C:\Windows\Temp
+  hosts: "{{ hosts | default('development') }}"
+  gather_facts: true
+  tasks:
+    - name: Removing files from C:\Windows Temp Directory
+      win_shell: gci -Path C:\Windows\Temp\ -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+      when: ansible_os_family == "Windows"

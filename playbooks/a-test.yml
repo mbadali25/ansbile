@@ -1,0 +1,9 @@
+---
+- hosts: DAWSE01AINTDB01
+  gather_facts: true
+  tasks:
+    - name: Get Disk Info
+      win_disk_facts:
+
+    - debug: var=ansible_facts
+
